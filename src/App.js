@@ -1,0 +1,77 @@
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+
+// Componentes y Páginas
+import Login from './components/Login';
+import UserProfile from './components/UserProfile';
+import HomePage from './components/HomePage';
+import UserManagement from './components/UserManagement';
+import WorkerManagement from './components/WorkerManagement';
+import ReportsPage from './components/ReportsPage'; // 1. Importar ReportsPage
+import ClusteringPage from './components/ClusteringPage';
+import AppLayout from './components/AppLayout';
+import EmergencySuperAdminSetup from './components/EmergencySuperAdminSetup'; // Importar herramienta de emergencia
+
+import './App.css';
+import './debugUser'; // Importar herramientas de debugging
+import './emergencyAuth'; // Importar funciones de emergencia
+import './testFirebase'; // Importar pruebas de conexión Firebase
+import { rawMaterialService } from './components/rawMaterialService'; // 1. Importar el servicio
+
+// 2. Habilitar la función de siembra para que esté disponible en la consola del navegador
+rawMaterialService.enableSeederInWindow();
+
+// Componente interno que usa el hook useAuth
+function AppContent() {
+  const { currentUser, logout } = useAuth();
+
+  useEffect(() => {
+    document.title = "INDUSTRIA PROCESADORA DEL CALZADO S.A.C.";
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/emergency-super-admin"
+          element={<EmergencySuperAdminSetup />}
+        />
+        <Route
+          path="/login"
+          element={currentUser ? <Navigate to="/" /> : <Login />}
+        />
+        <Route
+          path="/*"
+          element={
+            currentUser ? (
+              <Routes>
+                <Route element={<AppLayout onLogout={logout} />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="profile" element={<UserProfile />} />
+                  <Route path="users" element={<UserManagement />} />
+                  <Route path="workers" element={<WorkerManagement />} />
+                  <Route path="reports" element={<ReportsPage />} /> {/* 2. Añadir la ruta */}
+                  <Route path="clustering" element={<ClusteringPage />} />
+                </Route>
+              </Routes>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+// Componente principal que proporciona el contexto
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+export default App;
